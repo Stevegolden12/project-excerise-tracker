@@ -17,9 +17,9 @@ mongoose.connect(process.env.MLAB_URI || 'mongodb://localhost:27017/ExerciseTrac
 
 app.use(cors())
 
-
-app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: false }))
+
 
 
 
@@ -57,24 +57,69 @@ var userSchema = new Schema({
 //Database Model                 (collection Name, Schema Name)
 var exerciseUser = mongoose.model('exerciseUsers', userSchema);
 
-//
+//Create user route
 app.post('/api/exercise/new-user', (req, res) => {
-
-
+  console.log(req.body)
   var eUser = new exerciseUser({ username: req.body.username })
 
   eUser.save(eUser, function (err, user) {
-  console.log("User when saving is: " + user._id);
+    console.log("User when saving is: " + user._id);
     if (err) { return console.error(err) }
-    else{
+    else {
       res.send('Your userId to access the tracker is: ' + user._id);
     }
-   
   })
- 
-  
-  
 })
+
+//Create exercise route
+app.post('/api/exercise/add', (req, res) => {
+  //Ignore des because input always returns a string
+  let chkFields = {
+    id: true,
+    des: true,
+    dur: true,
+    date: '',
+  }
+ 
+  //Validate _id is in database
+  exerciseUser.find({ _id: req.body.userId }, '_id', function (err, docs) {
+   if (docs[0] === undefined) {
+      return chkFields.id = false;
+    }
+  }) 
+
+  //Validate Description
+
+  
+  //Validate duration
+  const chkDur = /^[0-9]*$/gm;
+
+  if (!chkDur.test(req.body.duration)) {
+     return chkFields.dur = false;
+  }
+
+  
+  //Check for date and auto-fill
+
+  //WAY TOO SLOW TRY to make a function than assign it to chkFields.date that way
+  if (req.body.date === '') {
+    const d = (new Date().toISOString().slice(0, 10))
+    return chkFields.date = d;
+  } else {
+    return chkFields.date = req.body.date;
+  }
+
+  res.send("chkFields.date is: ")
+
+  //Validate filled-in date
+  //Update the user
+  //Return the username, _id, and all of this session information (desc, duration, and date)
+ 
+ 
+})
+
+
+
 
 // Not found middleware
 app.use((req, res, next) => {
