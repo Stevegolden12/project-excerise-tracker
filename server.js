@@ -74,47 +74,86 @@ app.post('/api/exercise/new-user', (req, res) => {
 //Create exercise route
 app.post('/api/exercise/add', (req, res) => {
   //Ignore des because input always returns a string
-  let chkFields = {
+  let validDate = '';
+
+  var chkFields = {
     id: true,
     des: true,
     dur: true,
-    date: '',
+    date: true,
   }
  
-  //Validate _id is in database
-  exerciseUser.find({ _id: req.body.userId }, '_id', function (err, docs) {
-   if (docs[0] === undefined) {
-      return chkFields.id = false;
-    }
-  }) 
-
-  //Validate Description
+  //Validate Description 
+  if (req.body.description === '') {
+    chkFields.des = false;
+  }
 
   
   //Validate duration
   const chkDur = /^[0-9]*$/gm;
 
-  if (!chkDur.test(req.body.duration)) {
-     return chkFields.dur = false;
+  if (!chkDur.test(req.body.duration) || req.body.duration === '') {
+     chkFields.dur = false;
   }
+
+  console.log("chkFields.dur: " + chkFields.dur)
+
 
   
-  //Check for date and auto-fill
+  //Check for null date and auto-fill
+  const autoDate = (bDate) => {
+    if (bDate === '') {
+      const d = (new Date().toISOString().slice(0, 10))
+      return d;
+    } else {
+      return bDate;
+    }
+  }  
 
-  //WAY TOO SLOW TRY to make a function than assign it to chkFields.date that way
-  if (req.body.date === '') {
-    const d = (new Date().toISOString().slice(0, 10))
-    return chkFields.date = d;
-  } else {
-    return chkFields.date = req.body.date;
+  validDate = autoDate(req.body.date); 
+ 
+  //Validate filled-in date
+
+
+  const valDate = (fillDate) => {
+    const chkDate = /^[0-9]{4}[-][0-9]{2}[-][0-9]{2}$/gm;
+   
+    if (!chkDate.test(fillDate)) {
+      console.log("chkDate is false: " + fillDate)
+      return false;
+    }
+    return true;
   }
 
-  res.send("chkFields.date is: ")
+  chkFields.date = valDate(validDate);
 
-  //Validate filled-in date
-  //Update the user
-  //Return the username, _id, and all of this session information (desc, duration, and date)
- 
+  //Validate _id is in database and return validate results
+  exerciseUser.find({ _id: req.body.userId }, '_id', function (err, docs) {
+
+    if (docs[0] !== undefined) { 
+      chkFields.id = true;
+    } else {
+      chkFields.id = false;
+    }
+
+    console.log("Logic: " + (!chkFields.id && !chkFields.des && !chkFields.dur && !chkFields.date))
+  
+    if (chkFields.id && chkFields.des && chkFields.dur && chkFields.date) {
+       //Return the username, _id, and all of this session information (desc, duration, and date)
+        res.send("all the fields are valid")
+    } else {
+      let valFail = [];
+
+      switch (chkFields) {
+        case chkFields.id === false:
+          console.log("Triggered")
+          valFail.push('id')
+          break;
+      }
+      
+      res.send("Validation checks: <br>" + valFail.toString())
+    }
+  })
  
 })
 
