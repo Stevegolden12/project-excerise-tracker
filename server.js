@@ -144,12 +144,13 @@ app.post('/api/exercise/add', (req, res) => {
     } else {
       let valFail = [];
 
-      switch (chkFields) {
-        case chkFields.id === false:
-          console.log("Triggered")
-          valFail.push('id')
-          break;
-      }
+      //***REDO THE LOGIC SO CAN GET THE FAILED CASES WITHING THE valFail**
+      //switch (chkFields) {
+      //  case chkFields.id === false:
+      //    console.log("Triggered")
+      //    valFail.push('id')
+      //    break;
+      //}
       
       res.send("Validation checks: <br>" + valFail.toString())
     }
