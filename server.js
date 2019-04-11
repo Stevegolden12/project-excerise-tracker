@@ -78,14 +78,14 @@ app.post('/api/exercise/add', (req, res) => {
 
   var chkFields = {
     id: true,
-    des: true,
-    dur: true,
+    description: true,
+    duration: true,
     date: true,
   }
  
   //Validate Description 
   if (req.body.description === '') {
-    chkFields.des = false;
+    chkFields.description = false;
   }
 
   
@@ -93,11 +93,8 @@ app.post('/api/exercise/add', (req, res) => {
   const chkDur = /^[0-9]*$/gm;
 
   if (!chkDur.test(req.body.duration) || req.body.duration === '') {
-     chkFields.dur = false;
+     chkFields.duration = false;
   }
-
-  console.log("chkFields.dur: " + chkFields.dur)
-
 
   
   //Check for null date and auto-fill
@@ -119,7 +116,6 @@ app.post('/api/exercise/add', (req, res) => {
     const chkDate = /^[0-9]{4}[-][0-9]{2}[-][0-9]{2}$/gm;
    
     if (!chkDate.test(fillDate)) {
-      console.log("chkDate is false: " + fillDate)
       return false;
     }
     return true;
@@ -136,23 +132,39 @@ app.post('/api/exercise/add', (req, res) => {
       chkFields.id = false;
     }
 
-    console.log("Logic: " + (!chkFields.id && !chkFields.des && !chkFields.dur && !chkFields.date))
-  
-    if (chkFields.id && chkFields.des && chkFields.dur && chkFields.date) {
-       //Return the username, _id, and all of this session information (desc, duration, and date)
-        res.send("all the fields are valid")
+    console.log("After validation chkFields.id: " + chkFields.id)
+   
+    if (chkFields.id && chkFields.description && chkFields.duration && chkFields.date) {
+       //Return the username, _id, and all of this session information (description, duration, and date)
+      res.send("all the fields are valid")
+
+      exerciseUser.findOneAndUpdate()
+
+
+
+
+
+
     } else {
       let valFail = [];
+      let valList = []
 
-      //***REDO THE LOGIC SO CAN GET THE FAILED CASES WITHING THE valFail**
-      //switch (chkFields) {
-      //  case chkFields.id === false:
-      //    console.log("Triggered")
-      //    valFail.push('id')
-      //    break;
-      //}
+      for (var check in chkFields) { 
+        valFail.push([check, chkFields[check]])
+      }
+
+      console.log("valFail is: " + valFail[1][1])
+
+      for (i = 0; i < valFail.length; i++) {
+        console.log("valFail within loop: " + valFail[i][1])
+        if (valFail[i][1] === false) {    
+          valList.push(valFail[i][0])
+        }
+      }
+
+      console.log("valList is: " + valList)
       
-      res.send("Validation checks: <br>" + valFail.toString())
+      res.send("The following fields are not valid: <br>" + valList.join(', '))
     }
   })
  
