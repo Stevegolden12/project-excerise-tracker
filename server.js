@@ -21,7 +21,8 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
 
 
-
+mongoose.set('useFindAndModify', false);
+mongoose.set('useCreateIndex', true);
 
 app.use(express.static('public'));
 
@@ -50,7 +51,7 @@ var userSchema = new Schema({
       type: Number,
       required: true
     },
-    date: Date
+    date: String
   }]
 })
 
@@ -113,9 +114,10 @@ app.post('/api/exercise/add', (req, res) => {
 
 
   const valDate = (fillDate) => {
-    const chkDate = /^[0-9]{4}[-][0-9]{2}[-][0-9]{2}$/gm;
+    console.log("Is Date good: " + fillDate)
    
-    if (!chkDate.test(fillDate)) {
+    const chkDate = /^[0-9]{4}[-][0-9]{2}[-][0-9]{2}$/gm;
+      if (!chkDate.test(fillDate)) {
       return false;
     }
     return true;
@@ -124,26 +126,33 @@ app.post('/api/exercise/add', (req, res) => {
   chkFields.date = valDate(validDate);
 
   //Validate _id is in database and return validate results
-  exerciseUser.find({ _id: req.body.userId }, '_id', function (err, docs) {
+  exerciseUser.find({ _id: req.body.userId }, function (err, user) {
 
-    if (docs[0] !== undefined) { 
+    if (user[0] !== undefined) {
       chkFields.id = true;
     } else {
       chkFields.id = false;
     }
 
-    console.log("After validation chkFields.id: " + chkFields.id)
-   
+  
     if (chkFields.id && chkFields.description && chkFields.duration && chkFields.date) {
-       //Return the username, _id, and all of this session information (description, duration, and date)
-      res.send("all the fields are valid")
-
-      exerciseUser.findOneAndUpdate()
-
-
-
-
-
+      //Return the username, _id, and all of this session information (description, duration, and date)
+     
+      exerciseUser.findOneAndUpdate(
+        { _id: user[0]._id },
+        { $push: { exercise: { description: req.body.description, duration: req.body.duration, date: validDate} } },
+        function (error, success) {
+          if (error) {
+            console.log("error");
+          } else {
+            console.log("success");  
+          }
+          }
+        );
+      console.log(user[0].username)
+      
+      res.send("The following session has been logged for " + user[0].username + ": </br>" + "exercise description: " + req.body.description + "</br>" +
+        "exercise duration: " + req.body.duration + " mins </br>" + "exercise date: " + validDate)
 
     } else {
       let valFail = [];
