@@ -58,6 +58,27 @@ var userSchema = new Schema({
 //Database Model                 (collection Name, Schema Name)
 var exerciseUser = mongoose.model('exerciseUsers', userSchema);
 
+//Validate filled-in date
+var valDate = (fillDate) => {
+  console.log("Is Date good: " + fillDate)
+
+  const chkDate = /^[0-9]{4}[-][0-9]{2}[-][0-9]{2}$/gm;
+  if (!chkDate.test(fillDate)) {
+    return false;
+  }
+  return true;
+}
+
+
+//Check :Limit is a number
+var chkLimit = (rpath) => {
+  if (isNaN(Number(rpath))) {
+    return false
+  } else {
+    return true
+  }
+}
+
 //Create user route
 app.post('/api/exercise/new-user', (req, res) => {
   console.log(req.body)
@@ -110,20 +131,8 @@ app.post('/api/exercise/add', (req, res) => {
 
   validDate = autoDate(req.body.date); 
  
-  //Validate filled-in date
-
-
-  const valDate = (fillDate) => {
-    console.log("Is Date good: " + fillDate)
-   
-    const chkDate = /^[0-9]{4}[-][0-9]{2}[-][0-9]{2}$/gm;
-      if (!chkDate.test(fillDate)) {
-      return false;
-    }
-    return true;
-  }
-
   chkFields.date = valDate(validDate);
+
 
   //Validate _id is in database and return validate results
   exerciseUser.find({ _id: req.body.userId }, function (err, user) {
@@ -134,10 +143,10 @@ app.post('/api/exercise/add', (req, res) => {
       chkFields.id = false;
     }
 
-  
+  //Ties all validation from above
     if (chkFields.id && chkFields.description && chkFields.duration && chkFields.date) {
-      //Return the username, _id, and all of this session information (description, duration, and date)
      
+     //Update the session information to the database
       exerciseUser.findOneAndUpdate(
         { _id: user[0]._id },
         { $push: { exercise: { description: req.body.description, duration: req.body.duration, date: validDate} } },
@@ -147,10 +156,8 @@ app.post('/api/exercise/add', (req, res) => {
           } else {
             console.log("success");  
           }
-          }
-        );
-      console.log(user[0].username)
-      
+        });
+      //Lets user know the update is successful
       res.send("The following session has been logged for " + user[0].username + ": </br>" + "exercise description: " + req.body.description + "</br>" +
         "exercise duration: " + req.body.duration + " mins </br>" + "exercise date: " + validDate)
 
@@ -179,6 +186,64 @@ app.post('/api/exercise/add', (req, res) => {
  
 })
 
+//Retrieve the user and exercise session information
+app.get('/api/exercise/log/:from?/:to?/:limit?', (req, res) => {
+  //validate req.query.username
+  var username = req.query.username.slice(0, 9)
+  //check which dynamic route are being used
+  var restPath = req.query.username.slice(10).split("/")
+
+  exerciseUser.find({ _id: username }, (err, user) => {
+
+    if (!user[0] === undefined) {
+      res.send("Please enter a valid username")
+    } else {
+      //check :from, :to, :limit
+      if (restPath.length === 1 && restPath[0] === '') {
+        console.log("No path: " + restPath[0])
+      } else if (restPath.length === 1 && !(restPath[0] === '')) {
+        //*************Just finished with validating if restPath logic******************
+        console.log("1 path")
+        console.log("chkLimit: " + chkLimit(restPath[0]))
+        if (chkLimit(restPath[0])) {
+
+      
+          const uexercise = user[0].exercise.forEach((element)=>console.log(element.description) )
+          
+          res.send(uexercise);
+           
+ 
+          
+        } else {
+          console.log(restPath[0])
+          res.send("Limit must be a number")
+        }      
+      } else if (restPath.length === 2) {
+        if (valDate(restPath[0]) && valDate(restPath[1])) {
+          res.send("Dates are valid")
+        } else {
+          res.send("Dates are invalid")
+        }        
+      } else if (restPath.length === 3) {
+        if (valDate(restPath[0]) && valDate(restPath[1]) && chkLimit(restPath[2])) {
+          res.send("Dates and Limit are valid")
+        } else {
+          res.send("Dates and/or Limit is/are invalid")
+        }    
+      } else if (restPath.length > 3) {
+        res.send("Invalid url path")
+      } else {
+
+
+
+        //validate :from, :to, and :limit
+        //return the info from database requested
+
+        res.send("Retrieval is working!")
+      }
+    }
+  })
+})
 
 
 
