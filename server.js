@@ -209,20 +209,21 @@ app.get('/api/exercise/log/:from?/:to?/:limit?', (req, res) => {
         if (chkLimit(restPath[0])) {
 
           const objLength = user[0].exercise.length
-          var nObj = {};
+          var nObj = [];
           user[0].exercise.forEach((obj, index) => {
            const limit = objLength <= restPath[0] ? objLength : restPath[0];
          
               if (limit > index) {
 
-                nObj = {
+                oObj = {
                   description: obj.description,
                   duration: obj.duration,
                   date: obj.date
                 }      
+                return nObj.push(oObj);
               }           
-          })       
-          res.send(nObj);          
+          })
+          res.send("The total amount of excerises shown is: " + nObj.length + "</br >" + JSON.stringify(nObj));          
         } else {
           console.log(restPath[0])
           res.send("Limit must be a number")
@@ -232,11 +233,7 @@ app.get('/api/exercise/log/:from?/:to?/:limit?', (req, res) => {
          
           var dObj = [];
            user[0].exercise.forEach((obj, index) => {
-
-            //**********************************************************************************************
-            // Only returning one find
-             //**********************************************************************************************
-                   
+              
              if (moment(restPath[0]).isSameOrBefore(obj.date) && moment(restPath[1]).isSameOrAfter(obj.date)) {
                eObj = {
                 description: obj.description,
@@ -246,8 +243,8 @@ app.get('/api/exercise/log/:from?/:to?/:limit?', (req, res) => {
                return dObj.push(eObj);
              }
           })
-          
-          res.send(dObj); 
+
+          res.send("The total amount of excerises shown is: " + dObj.length + "</br >" + JSON.stringify(dObj)); 
        
         } else {
           res.send("Dates are invalid")
@@ -255,11 +252,35 @@ app.get('/api/exercise/log/:from?/:to?/:limit?', (req, res) => {
       } else if (restPath.length === 3) {
         if (valDate(restPath[0]) && valDate(restPath[1]) && chkLimit(restPath[2])) {
 
+          var fObj = [];
+          user[0].exercise.forEach((obj, index) => {
 
+            const objLength = user[0].exercise.length;
+            var countArr = 0;
+            const limit = objLength <= restPath[2] ? objLength : restPath[2];
+            console.log("limit: " + limit)
+            console.log("fObj.length: " + fObj.length)
+            if (limit > fObj.length) {
+       
+            if (moment(restPath[0]).isSameOrBefore(obj.date) && moment(restPath[1]).isSameOrAfter(obj.date)) {
+                          
+                gObj = {
+                  description: obj.description,
+                  duration: obj.duration,
+                  date: obj.date
+              }              
+   
+                return fObj.push(gObj);
+                }
 
+              }
+              
+           
+            
+          })
 
-
-          res.send("Dates and Limit are valid")
+          res.send("The total amount of excerises shown is: " + fObj.length + "</br>" + JSON.stringify(fObj)); 
+  
         } else {
           res.send("Dates and/or Limit is/are invalid")
         }    
