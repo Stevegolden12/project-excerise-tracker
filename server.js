@@ -3,6 +3,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const mongoose = require('mongoose')
 const shortid = require('shortid')
+const moment = require('moment')
 
 
 const app = express()
@@ -60,7 +61,6 @@ var exerciseUser = mongoose.model('exerciseUsers', userSchema);
 
 //Validate filled-in date
 var valDate = (fillDate) => {
-  console.log("Is Date good: " + fillDate)
 
   const chkDate = /^[0-9]{4}[-][0-9]{2}[-][0-9]{2}$/gm;
   if (!chkDate.test(fillDate)) {
@@ -169,10 +169,10 @@ app.post('/api/exercise/add', (req, res) => {
         valFail.push([check, chkFields[check]])
       }
 
-      console.log("valFail is: " + valFail[1][1])
+
 
       for (i = 0; i < valFail.length; i++) {
-        console.log("valFail within loop: " + valFail[i][1])
+  
         if (valFail[i][1] === false) {    
           valList.push(valFail[i][0])
         }
@@ -204,28 +204,61 @@ app.get('/api/exercise/log/:from?/:to?/:limit?', (req, res) => {
       } else if (restPath.length === 1 && !(restPath[0] === '')) {
         //*************Just finished with validating if restPath logic******************
         console.log("1 path")
-        console.log("chkLimit: " + chkLimit(restPath[0]))
+     
+
         if (chkLimit(restPath[0])) {
 
-      
-          const uexercise = user[0].exercise.forEach((element)=>console.log(element.description) )
-          
-          res.send(uexercise);
-           
- 
-          
+          const objLength = user[0].exercise.length
+          var nObj = {};
+          user[0].exercise.forEach((obj, index) => {
+           const limit = objLength <= restPath[0] ? objLength : restPath[0];
+         
+              if (limit > index) {
+
+                nObj = {
+                  description: obj.description,
+                  duration: obj.duration,
+                  date: obj.date
+                }      
+              }           
+          })       
+          res.send(nObj);          
         } else {
           console.log(restPath[0])
           res.send("Limit must be a number")
         }      
       } else if (restPath.length === 2) {
         if (valDate(restPath[0]) && valDate(restPath[1])) {
-          res.send("Dates are valid")
+         
+          var dObj = [];
+           user[0].exercise.forEach((obj, index) => {
+
+            //**********************************************************************************************
+            // Only returning one find
+             //**********************************************************************************************
+                   
+             if (moment(restPath[0]).isSameOrBefore(obj.date) && moment(restPath[1]).isSameOrAfter(obj.date)) {
+               eObj = {
+                description: obj.description,
+                duration: obj.duration,
+                date: obj.date
+               }
+               return dObj.push(eObj);
+             }
+          })
+          
+          res.send(dObj); 
+       
         } else {
           res.send("Dates are invalid")
         }        
       } else if (restPath.length === 3) {
         if (valDate(restPath[0]) && valDate(restPath[1]) && chkLimit(restPath[2])) {
+
+
+
+
+
           res.send("Dates and Limit are valid")
         } else {
           res.send("Dates and/or Limit is/are invalid")
