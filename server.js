@@ -81,11 +81,9 @@ var chkLimit = (rpath) => {
 
 //Create user route
 app.post('/api/exercise/new-user', (req, res) => {
-  console.log(req.body)
   var eUser = new exerciseUser({ username: req.body.username })
 
-  eUser.save(eUser, function (err, user) {
-    console.log("User when saving is: " + user._id);
+  eUser.save(eUser, function (err, user) {  
     if (err) { return console.error(err) }
     else {
       res.send('Your userId to access the tracker is: ' + user._id);
@@ -264,7 +262,7 @@ app.get('/api/exercise/log/:from?/:to?/:limit?', (req, res) => {
        
             if (moment(restPath[0]).isSameOrBefore(obj.date) && moment(restPath[1]).isSameOrAfter(obj.date)) {
                           
-                gObj = {
+                let gObj = {
                   description: obj.description,
                   duration: obj.duration,
                   date: obj.date
